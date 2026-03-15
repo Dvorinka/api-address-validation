@@ -1,0 +1,484 @@
+openapi: 3.0.3
+info:
+  title: Address Validation API
+  description: API for validating addresses, geocoding, and reverse geocoding
+  version: 1.0.0
+  contact:
+    name: API Services
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8083
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /healthz:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /v1/address/validate:
+    post:
+      summary: Validate address
+      description: Validate and normalize an address
+      tags:
+        - Address Validation
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateInput'
+      responses:
+        '200':
+          description: Successful validation response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ValidateResult'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/address/geocode:
+    post:
+      summary: Geocode address (POST)
+      description: Convert address to coordinates using POST method
+      tags:
+        - Geocoding
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeocodeInput'
+      responses:
+        '200':
+          description: Successful geocoding response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeocodeMatch'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/address/geocode:
+    get:
+      summary: Geocode address (GET)
+      description: Convert address to coordinates using GET method
+      tags:
+        - Geocoding
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Address to geocode
+          example: "1600 Pennsylvania Ave NW, Washington, DC"
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Region/country hint
+          example: "US"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 1
+          description: Maximum number of results
+          example: 3
+      responses:
+        '200':
+          description: Successful geocoding response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeocodeMatch'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/address/reverse:
+    post:
+      summary: Reverse geocode (POST)
+      description: Convert coordinates to address using POST method
+      tags:
+        - Reverse Geocoding
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseInput'
+      responses:
+        '200':
+          description: Successful reverse geocoding response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReverseResult'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/address/reverse:
+    get:
+      summary: Reverse geocode (GET)
+      description: Convert coordinates to address using GET method
+      tags:
+        - Reverse Geocoding
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          description: Latitude
+          example: 38.8977
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          description: Longitude
+          example: -77.0365
+      responses:
+        '200':
+          description: Successful reverse geocoding response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReverseResult'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    ValidateInput:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: Address to validate
+          example: "1600 Pennsylvania Ave NW, Washington, DC 20500"
+        region:
+          type: string
+          description: Region/country hint for validation
+          example: "US"
+
+    GeocodeInput:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: Address to geocode
+          example: "1600 Pennsylvania Ave NW, Washington, DC"
+        region:
+          type: string
+          description: Region/country hint
+          example: "US"
+        limit:
+          type: integer
+          description: Maximum number of results
+          minimum: 1
+          maximum: 10
+          default: 1
+          example: 3
+
+    ReverseInput:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+          example: 38.8977
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+          example: -77.0365
+
+    AddressComponents:
+      type: object
+      properties:
+        house_number:
+          type: string
+          description: House number
+          example: "1600"
+        road:
+          type: string
+          description: Street name
+          example: "Pennsylvania Ave NW"
+        neighbourhood:
+          type: string
+          description: Neighbourhood
+          example: "Federal Triangle"
+        city:
+          type: string
+          description: City name
+          example: "Washington"
+        county:
+          type: string
+          description: County name
+          example: "District of Columbia"
+        state:
+          type: string
+          description: State/province
+          example: "DC"
+        postal_code:
+          type: string
+          description: Postal/ZIP code
+          example: "20500"
+        country:
+          type: string
+          description: Country name
+          example: "United States"
+        country_code:
+          type: string
+          description: ISO country code
+          example: "US"
+
+    GeocodeMatch:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+          example: 38.8977
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+          example: -77.0365
+        display_name:
+          type: string
+          description: Full display name of the location
+          example: "White House, 1600, Pennsylvania Ave NW, Federal Triangle, Washington, District of Columbia, 20500, United States"
+        importance:
+          type: number
+          format: float
+          description: Importance score
+          example: 0.7512
+        address:
+          $ref: '#/components/schemas/AddressComponents'
+
+    ValidateResult:
+      type: object
+      properties:
+        input_address:
+          type: string
+          description: Original input address
+          example: "1600 Pennsylvania Ave NW, Washington, DC 20500"
+        normalized_address:
+          type: string
+          description: Normalized address
+          example: "1600 Pennsylvania Ave NW, Washington, DC 20500"
+        region:
+          type: string
+          description: Detected region
+          example: "US"
+        is_valid:
+          type: boolean
+          description: Whether the address is valid
+          example: true
+        standardized_address:
+          type: string
+          description: Standardized address format
+          example: "1600 Pennsylvania Ave NW, Washington, DC 20500, USA"
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+          example: 38.8977
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+          example: -77.0365
+        confidence:
+          type: number
+          format: float
+          description: Confidence score (0-1)
+          example: 0.95
+        address:
+          $ref: '#/components/schemas/AddressComponents'
+        provider:
+          type: string
+          description: Data provider
+          example: "nominatim"
+
+    ReverseResult:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+          example: 38.8977
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+          example: -77.0365
+        display_name:
+          type: string
+          description: Full display name of the location
+          example: "White House, 1600, Pennsylvania Ave NW, Federal Triangle, Washington, District of Columbia, 20500, United States"
+        address:
+          $ref: '#/components/schemas/AddressComponents'
+        provider:
+          type: string
+          description: Data provider
+          example: "nominatim"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "invalid json body"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API key for authentication (format: "Bearer YOUR_API_KEY")
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Address Validation
+    description: Address validation and normalization
+  - name: Geocoding
+    description: Address to coordinate conversion
+  - name: Reverse Geocoding
+    description: Coordinate to address conversion

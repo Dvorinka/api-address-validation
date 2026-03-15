@@ -18,7 +18,7 @@ import (
 func main() {
 	logger := log.New(os.Stdout, "[address] ", log.LstdFlags)
 
-	port := envString("PORT", "8083")
+	port := envString("PORT", "30001")
 	apiKey := envString("ADDRESS_API_KEY", "dev-address-key")
 	providerURL := envString("ADDRESS_PROVIDER_URL", "")
 	userAgent := envString("ADDRESS_USER_AGENT", "")
